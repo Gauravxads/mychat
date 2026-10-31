@@ -1,0 +1,14 @@
+{
+  "appId": "com.mychat.app",
+  "appName": "MyChat",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#008069"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "style": "DARK"
+    }
+  }
+}

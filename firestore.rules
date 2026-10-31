@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function inChat(chatId) { return signedIn() && request.auth.uid in chatId.split('_'); }
+
+    // Profiles: anyone signed in can see users; you can only edit your own.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // Chat id = the two user ids, sorted, joined with "_". Only those two can touch it.
+    match /chats/{chatId} {
+      allow get: if inChat(chatId);
+      allow list: if signedIn() && request.auth.uid in resource.data.members;
+      allow create, update: if inChat(chatId)
+        && request.resource.data.members == chatId.split('_');
+
+      match /messages/{msgId} {
+        allow read: if inChat(chatId);
+        allow create: if inChat(chatId)
+          && request.resource.data.from == request.auth.uid
+          && (!('text' in request.resource.data) || request.resource.data.text.size() <= 5000)
+          && (!('image' in request.resource.data) || request.resource.data.image.size() <= 900000);
+      }
+    }
+  }
+}
