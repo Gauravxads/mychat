@@ -47,6 +47,15 @@ Edit any file on GitHub and commit. A new APK is built automatically (about 5 mi
 
 The download link always gives the newest version too. Change the app's name in `capacitor.config.json` (`appName`).
 
+## Contacts, requests and admin
+
+- **Unique ID:** every account gets a 6-character ID (e.g. `K7Q2MX`), shown at the top of the chat list with a Copy button.
+- **Add a contact:** tap **＋**, enter their ID → they get a request under the **🔔 bell**. They tap **Approve** or **Reject**. Only approved contacts appear in the chat list and can message each other.
+- **Remove a contact:** open the chat → **Remove**. It disappears from both lists; to chat again, send a new request.
+- **Admin:** an account marked as admin (a document `admins/<user UID>` in Firestore, added from the Firebase console) sees an **Admin** button that lists every conversation, read-only.
+
+To make someone admin: Firebase console → Authentication → copy their **User UID** → Firestore → Start collection `admins` → Document ID = that UID → add any field (e.g. `role` = `admin`) → Save.
+
 ## Good to know
 
 - **Cost:** Firebase's free plan allows about 50,000 reads and 20,000 writes per day. That is plenty for family, friends or a small team.

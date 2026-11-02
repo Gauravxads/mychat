@@ -3,23 +3,69 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function inChat(chatId) { return signedIn() && request.auth.uid in chatId.split('_'); }
-
-    // Profiles: anyone signed in can see users; you can only edit your own.
-    match /users/{userId} {
-      allow read: if signedIn();
-      allow write: if signedIn() && request.auth.uid == userId;
+    // Admins: accounts with a document at admins/<uid>. Only addable from the Firebase console.
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    // The two people in a chat must be approved contacts to write to it.
+    function areContacts(chatId) {
+      let ids = chatId.split('_');
+      return exists(/databases/$(database)/documents/users/$(ids[0])/contacts/$(ids[1]));
+    }
+    // A request from a to b exists, and I am b (the one approving).
+    function invitedMe(a, b) {
+      return request.auth.uid == b && exists(/databases/$(database)/documents/invites/$(a + '_' + b));
     }
 
-    // Chat id = the two user ids, sorted, joined with "_". Only those two can touch it.
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Profiles: readable one at a time (you need the person's account id, which only contacts have).
+    // Only admins can list everyone. You can only edit your own.
+    match /users/{userId} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow write: if signedIn() && request.auth.uid == userId;
+
+      // Contacts: created only by approving a request; either side can remove.
+      match /contacts/{cid} {
+        allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+        allow create, update: if signedIn()
+          && (invitedMe(cid, userId) || invitedMe(userId, cid));
+        allow delete: if signedIn() && (request.auth.uid == userId || request.auth.uid == cid);
+      }
+    }
+
+    // Unique IDs: codes/<ID> -> {uid}. Look up one ID at a time; claim a free one for yourself; never changed.
+    match /codes/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn()
+        && code.matches('^[A-Z0-9]{6}$')
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid']);
+    }
+
+    // Contact requests: id is <from>_<to>. Only sender and receiver can see it; either can delete it.
+    match /invites/{inviteId} {
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
+      allow create: if signedIn()
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to != request.auth.uid
+        && inviteId == request.auth.uid + '_' + request.resource.data.to;
+      allow delete: if signedIn()
+        && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
+    }
+
+    // Chat id = the two user ids, sorted, joined with "_". Only those two can read it (plus admins).
     match /chats/{chatId} {
-      allow get: if inChat(chatId);
-      allow list: if signedIn() && request.auth.uid in resource.data.members;
-      allow create, update: if inChat(chatId)
+      allow get: if inChat(chatId) || isAdmin();
+      allow list: if signedIn() && (request.auth.uid in resource.data.members || isAdmin());
+      allow create, update: if inChat(chatId) && areContacts(chatId)
         && request.resource.data.members == chatId.split('_');
 
       match /messages/{msgId} {
-        allow read: if inChat(chatId);
-        allow create: if inChat(chatId)
+        allow read: if inChat(chatId) || isAdmin();
+        allow create: if inChat(chatId) && areContacts(chatId)
           && request.resource.data.from == request.auth.uid
           && (!('text' in request.resource.data) || request.resource.data.text.size() <= 5000)
           && (!('image' in request.resource.data) || request.resource.data.image.size() <= 900000);
