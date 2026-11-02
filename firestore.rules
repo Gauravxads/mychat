@@ -69,6 +69,12 @@ service cloud.firestore {
           && request.resource.data.from == request.auth.uid
           && (!('text' in request.resource.data) || request.resource.data.text.size() <= 5000)
           && (!('image' in request.resource.data) || request.resource.data.image.size() <= 900000);
+        // "Delete for everyone": only the sender, and only by marking it deleted and clearing its content.
+        allow update: if inChat(chatId)
+          && resource.data.from == request.auth.uid
+          && request.resource.data.deleted == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'text', 'image', 'replyTo'])
+          && !('text' in request.resource.data) && !('image' in request.resource.data);
       }
     }
   }
