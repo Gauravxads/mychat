@@ -751,3 +751,4 @@ svg { flex-shrink: 0; }
 .preview.typing { color: var(--primary); font-style: italic; }
 .row.no-results { justify-content: center; color: var(--text-3); font-size: 14px; cursor: default; min-height: 64px; }
 @media (prefers-color-scheme: dark) { .sheet, #add-form { background: var(--surface-2); } }
+#empty-share { margin-top: 4px; }

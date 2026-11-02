@@ -72,18 +72,6 @@
     </button>
   </header>
 
-  <div class="me-strip">
-    <div class="me-text">
-      <div class="me-label"><span id="me-name"></span> · Your ID</div>
-      <div id="me-code">------</div>
-    </div>
-    <button id="copy-code" type="button">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
-      Copy
-    </button>
-    <button id="share-code" type="button" class="icon-btn" aria-label="Share my ID"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
-  </div>
-
   <div class="search-wrap">
     <label for="search" class="sr-only">Search contacts</label>
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -99,10 +87,11 @@
       <h2>Start your first chat</h2>
       <p>MyChat is private. You can only chat with people who add each other by ID.</p>
       <ol>
-        <li><span>Copy your ID above and send it to a friend</span></li>
+        <li><span>Share your ID with a friend (it's also in your profile, top right)</span></li>
         <li><span>Or tap <b>Add contact</b> and type their 6-character ID</span></li>
         <li><span>Once they approve, they'll show up here</span></li>
       </ol>
+      <button id="empty-share" type="button" class="btn btn-primary">Share my ID</button>
     </div>
     <div id="version"></div>
   </div>
