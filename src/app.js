@@ -234,8 +234,6 @@ function start(user) {
   // My own profile (name, photo, unique ID)
   unsubs.push(onSnapshot(doc(db, 'users', me), (d) => {
     users[me] = d.data({ serverTimestamps: 'estimate' }) || {};
-    $('me-name').textContent = users[me].name || '';
-    $('me-code').textContent = users[me].code || '…';
     setAvatar('me-avatar', me);
     if (profileFor === me) renderProfile();
     if (d.exists() && !users[me].code) ensureCode();
@@ -331,13 +329,10 @@ async function ensureCode() {
 }
 
 const inviteText = (code) => `Add me on MyChat! My ID is ${code}\n\nGet the app: ${APK_URL}`;
-$('copy-code').onclick = () => {
-  const code = users[me]?.code;
-  if (code) copyText(code, `Your ID ${code} is copied. Send it to a friend so they can add you.`);
-};
-$('share-code').onclick = () => {
+$('empty-share').onclick = () => {
   const code = users[me]?.code;
   if (code) shareText(inviteText(code), 'Share your MyChat ID');
+  else toast('Your ID is still being created. Try again in a moment.');
 };
 
 // Live name / photo / online status for each contact
