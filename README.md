@@ -41,9 +41,11 @@ Everyone who signs up appears in everyone else's contact list.
 
 ## Updating the app
 
-Edit any file on GitHub and commit. A new APK is built automatically, and the **same link** always gives the newest version. Installing it updates the app in place, and chats are kept because they are stored in Firebase.
+Edit any file on GitHub and commit. A new APK is built automatically (about 5 minutes).
 
-Change the app's name in `capacitor.config.json` (`appName`).
+**People don't need to reinstall.** When they open MyChat, it checks for a newer build and asks **"Update available — Update / Later"**. Tapping Update downloads it with a progress bar and opens Android's installer. The first time, Android asks them to allow "Install unknown apps" for MyChat. Chats are kept.
+
+The download link always gives the newest version too. Change the app's name in `capacitor.config.json` (`appName`).
 
 ## Good to know
 
@@ -63,4 +65,5 @@ Change the app's name in `capacitor.config.json` (`appName`).
 | `firestore.rules` | Security rules (paste into Firebase) |
 | `.github/workflows/build-apk.yml` | Builds the APK on GitHub |
 | `capacitor.config.json` | App name and ID |
+| `native/*.java` | Android code for the in-app updater |
 | `debug.keystore.b64` | Signing key (base64 text), so updates install over the old app |

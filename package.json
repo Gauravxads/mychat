@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild src/app.js --bundle --minify --format=esm --target=es2020 --outfile=www/app.js"
+    "build": "esbuild src/app.js --bundle --minify --format=esm --target=es2020 --define:__BUILD__=${BUILD_NUMBER:-0} --outfile=www/app.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
