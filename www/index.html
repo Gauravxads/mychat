@@ -1,129 +1,267 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content">
-  <meta name="theme-color" content="#008069">
-  <title>MyChat</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111B21" media="(prefers-color-scheme: dark)">
+<title>MyChat</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Login / sign up -->
-  <section id="auth" class="screen auth" hidden>
-    <div class="auth-card">
-      <div class="logo">💬</div>
-      <h1>MyChat</h1>
-      <p id="setup-msg" class="setup" hidden>Firebase is not set up yet. Paste your config into <b>src/firebase-config.js</b> and rebuild.</p>
-      <form id="auth-form">
-        <input id="f-name" type="text" placeholder="Your name" autocomplete="name" maxlength="40" hidden>
-        <input id="f-email" type="email" placeholder="Email" autocomplete="email" required>
-        <input id="f-pass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" minlength="6" required>
-        <button id="f-submit" type="submit">Log in</button>
-        <p id="f-error" class="error"></p>
-      </form>
-      <button id="f-toggle" class="link" type="button">New here? Create an account</button>
+<!-- =====================================================
+     AUTH (login / sign up)
+     JS: show/hide #f-name's .field for sign-up mode,
+     set #f-submit text, #f-toggle text, #f-error text.
+     ===================================================== -->
+<section id="auth" class="screen" hidden>
+  <div class="brand">
+    <div class="brand-logo" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9 11h6M9 14h4"/></svg>
     </div>
-  </section>
+    <h1>MyChat</h1>
+    <p id="auth-sub">Private chat for your circle. Log in to see your chats.</p>
+  </div>
 
-  <!-- Chat list -->
-  <section id="home" class="screen" hidden>
-    <header class="bar">
-      <h2>MyChat</h2>
-      <button id="admin-btn" class="text-btn" hidden>Admin</button>
-      <button id="add-btn" class="icon-btn" aria-label="Add contact" title="Add contact">＋</button>
-      <button id="bell" class="icon-btn bell" aria-label="Requests" title="Requests">🔔<span id="bell-badge" class="bell-badge" hidden>0</span></button>
-    </header>
-    <div class="myid">
-      <span class="myid-text"><b id="me-name"></b> · Your ID <b id="me-code" class="code">…</b></span>
-      <button id="copy-code" class="link-btn" type="button">Copy</button>
-      <button id="logout" class="link-btn muted" type="button">Log out</button>
+  <form id="auth-form" novalidate>
+    <div class="field" id="name-field" hidden>
+      <label for="f-name">Your name</label>
+      <input id="f-name" class="input" type="text" autocomplete="name" placeholder="e.g. Asha Rao">
     </div>
-    <div class="search"><input id="search" type="search" placeholder="Search contacts"></div>
-    <p id="empty" class="empty" hidden>No contacts yet.<br>Tap <b>＋</b> and enter a friend's ID, or send them your ID so they can add you.</p>
-    <ul id="list" class="list"></ul>
-    <p id="version" class="version"></p>
-  </section>
-
-  <!-- Contact requests (bell) -->
-  <section id="requests" class="screen" hidden>
-    <header class="bar">
-      <button id="r-back" class="icon-btn" aria-label="Back">←</button>
-      <h2>Requests</h2>
-    </header>
-    <div class="r-body">
-      <h4 class="r-head">Received</h4>
-      <ul id="r-in" class="r-list"></ul>
-      <p id="r-in-empty" class="r-empty">No new requests.</p>
-      <h4 class="r-head">Sent</h4>
-      <ul id="r-out" class="r-list"></ul>
-      <p id="r-out-empty" class="r-empty">No pending requests.</p>
+    <div class="field">
+      <label for="f-email">Email</label>
+      <input id="f-email" class="input" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com">
     </div>
-  </section>
-
-  <!-- Admin: every conversation (read-only) -->
-  <section id="admin" class="screen" hidden>
-    <header class="bar">
-      <button id="a-back" class="icon-btn" aria-label="Back">←</button>
-      <div class="c-title">
-        <div class="a-title">All chats (admin)</div>
-        <div id="a-count" class="c-status"></div>
+    <div class="field">
+      <label for="f-pass">Password</label>
+      <div class="pass-wrap">
+        <input id="f-pass" class="input" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters">
+        <button type="button" class="icon-btn" aria-label="Show password"
+          onclick="var p=document.getElementById('f-pass');p.type=p.type==='password'?'text':'password'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
-    </header>
-    <ul id="a-list" class="list"></ul>
-    <p id="a-empty" class="empty" hidden>No conversations yet.</p>
-  </section>
+    </div>
+    <div id="f-error" class="alert" role="alert"></div>
+    <button id="f-submit" type="submit" class="btn btn-primary btn-block">Log in</button>
+  </form>
 
-  <!-- Conversation -->
-  <section id="chat" class="screen" hidden>
-    <header class="bar">
-      <button id="back" class="icon-btn" aria-label="Back">←</button>
-      <div id="c-avatar" class="avatar sm"></div>
-      <div class="c-title">
-        <div id="c-name"></div>
-        <div id="c-status" class="c-status"></div>
+  <div class="auth-switch">
+    <button id="f-toggle" type="button">New here? Create an account</button>
+  </div>
+  <div id="setup-msg"></div>
+</section>
+
+<!-- =====================================================
+     HOME — chat list
+     ===================================================== -->
+<section id="home" class="screen" hidden>
+  <header class="app-bar">
+    <h1>MyChat</h1>
+    <button id="admin-btn" class="icon-btn" aria-label="Admin: all chats" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    </button>
+    <button id="bell" class="icon-btn" aria-label="Contact requests">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+      <span id="bell-badge"></span>
+    </button>
+    <button id="logout" class="icon-btn" aria-label="Log out">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg>
+    </button>
+  </header>
+
+  <div class="me-strip">
+    <div class="me-text">
+      <div class="me-label"><span id="me-name"></span> · Your ID</div>
+      <div id="me-code">------</div>
+    </div>
+    <button id="copy-code" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
+      Copy
+    </button>
+  </div>
+
+  <div class="search-wrap">
+    <label for="search" class="sr-only">Search contacts</label>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input id="search" type="search" placeholder="Search contacts" autocomplete="off">
+  </div>
+
+  <div id="list">
+    <!-- JS renders .row items here -->
+    <div id="empty" hidden>
+      <div class="empty-art" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/></svg>
       </div>
-      <button id="c-remove" class="text-btn" type="button">Remove</button>
-    </header>
-    <div id="msgs" class="msgs"></div>
-    <form id="composer" class="composer">
-      <label class="icon-btn attach" aria-label="Send photo">📎<input id="photo" type="file" accept="image/*" hidden></label>
+      <h2>Start your first chat</h2>
+      <p>MyChat is private. You can only chat with people who add each other by ID.</p>
+      <ol>
+        <li><span>Copy your ID above and send it to a friend</span></li>
+        <li><span>Or tap <b>Add contact</b> and type their 6-character ID</span></li>
+        <li><span>Once they approve, they'll show up here</span></li>
+      </ol>
+    </div>
+    <div id="version"></div>
+  </div>
+
+  <button id="add-btn" type="button">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/></svg>
+    Add contact
+  </button>
+</section>
+
+<!-- =====================================================
+     REQUESTS
+     ===================================================== -->
+<section id="requests" class="screen" hidden>
+  <header class="sub-bar">
+    <button id="r-back" class="icon-btn" aria-label="Back">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    </button>
+    <h1>Requests</h1>
+  </header>
+  <div class="req-body">
+    <div class="section-label">Received</div>
+    <div id="r-in"></div>
+    <div id="r-in-empty">No new requests.</div>
+
+    <div class="section-label muted">Sent</div>
+    <div id="r-out"></div>
+    <div id="r-out-empty">No pending requests.</div>
+
+    <p class="req-note">People who aren't your contacts can't see you or message you. Only approve people you know.</p>
+  </div>
+</section>
+
+<!-- =====================================================
+     ADMIN — all chats
+     ===================================================== -->
+<section id="admin" class="screen" hidden>
+  <header class="sub-bar">
+    <button id="a-back" class="icon-btn" aria-label="Back">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    </button>
+    <div class="titles">
+      <h1>All chats</h1>
+      <div id="a-count"></div>
+    </div>
+    <span class="admin-chip">ADMIN</span>
+  </header>
+  <div class="admin-note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+    Read-only. You can view chats but not send messages.
+  </div>
+  <div id="a-list"></div>
+  <div id="a-empty" hidden>No chats yet.</div>
+</section>
+
+<!-- =====================================================
+     CHAT (also used for admin read-only view:
+     JS adds class "admin-view" to #chat)
+     ===================================================== -->
+<section id="chat" class="screen" hidden>
+  <header class="sub-bar">
+    <button id="back" class="icon-btn" aria-label="Back">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    </button>
+    <div id="c-avatar" class="avatar"></div>
+    <div class="titles">
+      <div id="c-name"></div>
+      <div id="c-status"></div>
+    </div>
+    <span class="admin-chip">VIEW ONLY</span>
+    <button id="c-remove" class="icon-btn" aria-label="Remove contact">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 11h6"/></svg>
+    </button>
+  </header>
+
+  <div id="msgs" aria-live="polite"></div>
+
+  <form id="composer" autocomplete="off">
+    <div class="composer-field">
+      <label for="text" class="sr-only">Message</label>
       <textarea id="text" rows="1" placeholder="Message" maxlength="5000"></textarea>
-      <button id="send" class="send" type="submit" aria-label="Send">➤</button>
-    </form>
-  </section>
+      <!-- Tapping the label opens the photo picker; #photo is the file input the app listens to -->
+      <label class="icon-btn photo-btn" aria-label="Send a photo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg>
+        <input id="photo" type="file" accept="image/*" hidden>
+      </label>
+    </div>
+    <button id="send" type="submit" aria-label="Send">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5a1 1 0 0 0 0-1.8L3.4 3.6a1 1 0 0 0-1.4 1.1L3.6 11 14 12 3.6 13l-1.6 6.3a1 1 0 0 0 1.4 1.1z"/></svg>
+    </button>
+  </form>
 
-  <div id="viewer" class="viewer" hidden><img id="viewer-img" alt=""></div>
-  <div id="toast" class="toast" hidden></div>
-
-  <!-- Add contact -->
-  <div id="add-modal" class="modal" hidden>
-    <form id="add-form" class="modal-card">
-      <h3>Add contact</h3>
-      <p>Enter your friend's ID. They'll get a request to approve.</p>
-      <input id="add-code" class="code-input" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. K7Q2MX">
-      <p id="add-error" class="error"></p>
-      <div class="u-btns">
-        <button id="add-cancel" class="u-later" type="button">Cancel</button>
-        <button id="add-send" class="u-yes" type="submit">Send request</button>
-      </div>
-    </form>
+  <div class="readonly-bar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    You're viewing as admin. Replies are turned off.
   </div>
+</section>
 
-  <!-- Update prompt -->
-  <div id="update" class="modal" hidden>
-    <div class="modal-card">
-      <h3>Update available</h3>
-      <p id="u-text"></p>
-      <div id="u-bar" class="u-track" hidden><div id="u-fill" class="u-fill"></div></div>
-      <p id="u-pct" class="u-pct"></p>
-      <div class="u-btns">
-        <button id="u-later" class="u-later" type="button">Later</button>
-        <button id="u-yes" class="u-yes" type="button">Update</button>
-      </div>
+<!-- =====================================================
+     ADD CONTACT — bottom sheet
+     ===================================================== -->
+<div id="add-modal" hidden>
+  <form id="add-form" role="dialog" aria-modal="true" aria-labelledby="add-title" novalidate>
+    <h2 id="add-title">Add contact</h2>
+    <p>Enter your friend's 6-character MyChat ID. They'll get a request to approve.</p>
+    <label for="add-code" class="sr-only">Friend's ID</label>
+    <input id="add-code" maxlength="8" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="K7Q2MX">
+    <div class="hint">Letters and numbers only · spaces are ignored</div>
+    <div id="add-error" class="alert" role="alert"></div>
+    <div class="sheet-actions">
+      <button id="add-cancel" type="button" class="btn btn-secondary">Cancel</button>
+      <button id="add-send" type="submit" class="btn btn-primary">Send request</button>
+    </div>
+  </form>
+</div>
+
+<!-- =====================================================
+     UPDATE — modal (steps driven by JS)
+     ===================================================== -->
+<div id="update" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="u-title">
+    <div class="dialog-icon" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+    </div>
+    <h2 id="u-title">Update available</h2>
+    <p id="u-text">A new version of MyChat is ready (4.2 MB). Your chats stay safe — nothing is deleted.</p>
+    <div class="progress-row" id="u-progress" hidden>
+      <div id="u-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div id="u-fill"></div></div>
+      <span id="u-pct">0%</span>
+    </div>
+    <div class="dialog-actions">
+      <button id="u-later" type="button" class="btn btn-ghost">Later</button>
+      <button id="u-yes" type="button" class="btn btn-primary">Update</button>
     </div>
   </div>
+</div>
 
-  <script type="module" src="app.js"></script>
+<!-- =====================================================
+     CONFIRM dialog (log out / remove contact)
+     Use instead of window.confirm(): see HANDOFF.md
+     ===================================================== -->
+<div id="confirm" class="confirm" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-text"></p>
+    <div class="dialog-actions">
+      <button id="confirm-no" type="button" class="btn btn-ghost">Cancel</button>
+      <button id="confirm-yes" type="button" class="btn btn-danger">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO VIEWER -->
+<div id="viewer" hidden>
+  <img id="viewer-img" alt="Photo">
+</div>
+
+<!-- TOAST -->
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- Keep your existing script tag(s) here, unchanged -->
+<script type="module" src="app.js"></script>
 </body>
 </html>
