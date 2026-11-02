@@ -3,12 +3,12 @@
   "appName": "MyChat",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#008069"
+    "backgroundColor": "#FFFFFF"
   },
   "plugins": {
     "SystemBars": {
       "insetsHandling": "native",
-      "style": "DARK"
+      "style": "DEFAULT"
     }
   }
 }
