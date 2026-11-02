@@ -30,14 +30,35 @@
   <section id="home" class="screen" hidden>
     <header class="bar">
       <h2>MyChat</h2>
-      <span id="me-name" class="me-name"></span>
       <button id="admin-btn" class="text-btn" hidden>Admin</button>
-      <button id="logout" class="text-btn">Log out</button>
+      <button id="add-btn" class="icon-btn" aria-label="Add contact" title="Add contact">＋</button>
+      <button id="bell" class="icon-btn bell" aria-label="Requests" title="Requests">🔔<span id="bell-badge" class="bell-badge" hidden>0</span></button>
     </header>
+    <div class="myid">
+      <span class="myid-text"><b id="me-name"></b> · Your ID <b id="me-code" class="code">…</b></span>
+      <button id="copy-code" class="link-btn" type="button">Copy</button>
+      <button id="logout" class="link-btn muted" type="button">Log out</button>
+    </div>
     <div class="search"><input id="search" type="search" placeholder="Search contacts"></div>
+    <p id="empty" class="empty" hidden>No contacts yet.<br>Tap <b>＋</b> and enter a friend's ID, or send them your ID so they can add you.</p>
     <ul id="list" class="list"></ul>
-    <p id="empty" class="empty" hidden>No contacts yet. Share the app with friends — they show up here once they sign up.</p>
     <p id="version" class="version"></p>
+  </section>
+
+  <!-- Contact requests (bell) -->
+  <section id="requests" class="screen" hidden>
+    <header class="bar">
+      <button id="r-back" class="icon-btn" aria-label="Back">←</button>
+      <h2>Requests</h2>
+    </header>
+    <div class="r-body">
+      <h4 class="r-head">Received</h4>
+      <ul id="r-in" class="r-list"></ul>
+      <p id="r-in-empty" class="r-empty">No new requests.</p>
+      <h4 class="r-head">Sent</h4>
+      <ul id="r-out" class="r-list"></ul>
+      <p id="r-out-empty" class="r-empty">No pending requests.</p>
+    </div>
   </section>
 
   <!-- Admin: every conversation (read-only) -->
@@ -62,6 +83,7 @@
         <div id="c-name"></div>
         <div id="c-status" class="c-status"></div>
       </div>
+      <button id="c-remove" class="text-btn" type="button">Remove</button>
     </header>
     <div id="msgs" class="msgs"></div>
     <form id="composer" class="composer">
@@ -73,6 +95,20 @@
 
   <div id="viewer" class="viewer" hidden><img id="viewer-img" alt=""></div>
   <div id="toast" class="toast" hidden></div>
+
+  <!-- Add contact -->
+  <div id="add-modal" class="modal" hidden>
+    <form id="add-form" class="modal-card">
+      <h3>Add contact</h3>
+      <p>Enter your friend's ID. They'll get a request to approve.</p>
+      <input id="add-code" class="code-input" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. K7Q2MX">
+      <p id="add-error" class="error"></p>
+      <div class="u-btns">
+        <button id="add-cancel" class="u-later" type="button">Cancel</button>
+        <button id="add-send" class="u-yes" type="submit">Send request</button>
+      </div>
+    </form>
+  </div>
 
   <!-- Update prompt -->
   <div id="update" class="modal" hidden>
