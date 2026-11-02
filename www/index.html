@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#008069">
+  <title>MyChat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Login / sign up -->
+  <section id="auth" class="screen auth" hidden>
+    <div class="auth-card">
+      <div class="logo">💬</div>
+      <h1>MyChat</h1>
+      <p id="setup-msg" class="setup" hidden>Firebase is not set up yet. Paste your config into <b>src/firebase-config.js</b> and rebuild.</p>
+      <form id="auth-form">
+        <input id="f-name" type="text" placeholder="Your name" autocomplete="name" maxlength="40" hidden>
+        <input id="f-email" type="email" placeholder="Email" autocomplete="email" required>
+        <input id="f-pass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" minlength="6" required>
+        <button id="f-submit" type="submit">Log in</button>
+        <p id="f-error" class="error"></p>
+      </form>
+      <button id="f-toggle" class="link" type="button">New here? Create an account</button>
+    </div>
+  </section>
+
+  <!-- Chat list -->
+  <section id="home" class="screen" hidden>
+    <header class="bar">
+      <h2>MyChat</h2>
+      <span id="me-name" class="me-name"></span>
+      <button id="logout" class="text-btn">Log out</button>
+    </header>
+    <div class="search"><input id="search" type="search" placeholder="Search contacts"></div>
+    <ul id="list" class="list"></ul>
+    <p id="empty" class="empty" hidden>No contacts yet. Share the app with friends — they show up here once they sign up.</p>
+    <p id="version" class="version"></p>
+  </section>
+
+  <!-- Conversation -->
+  <section id="chat" class="screen" hidden>
+    <header class="bar">
+      <button id="back" class="icon-btn" aria-label="Back">←</button>
+      <div id="c-avatar" class="avatar sm"></div>
+      <div class="c-title">
+        <div id="c-name"></div>
+        <div id="c-status" class="c-status"></div>
+      </div>
+    </header>
+    <div id="msgs" class="msgs"></div>
+    <form id="composer" class="composer">
+      <label class="icon-btn attach" aria-label="Send photo">📎<input id="photo" type="file" accept="image/*" hidden></label>
+      <textarea id="text" rows="1" placeholder="Message" maxlength="5000"></textarea>
+      <button id="send" class="send" type="submit" aria-label="Send">➤</button>
+    </form>
+  </section>
+
+  <div id="viewer" class="viewer" hidden><img id="viewer-img" alt=""></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Update prompt -->
+  <div id="update" class="modal" hidden>
+    <div class="modal-card">
+      <h3>Update available</h3>
+      <p id="u-text"></p>
+      <div id="u-bar" class="u-track" hidden><div id="u-fill" class="u-fill"></div></div>
+      <p id="u-pct" class="u-pct"></p>
+      <div class="u-btns">
+        <button id="u-later" class="u-later" type="button">Later</button>
+        <button id="u-yes" class="u-yes" type="button">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
