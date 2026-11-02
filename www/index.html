@@ -31,12 +31,26 @@
     <header class="bar">
       <h2>MyChat</h2>
       <span id="me-name" class="me-name"></span>
+      <button id="admin-btn" class="text-btn" hidden>Admin</button>
       <button id="logout" class="text-btn">Log out</button>
     </header>
     <div class="search"><input id="search" type="search" placeholder="Search contacts"></div>
     <ul id="list" class="list"></ul>
     <p id="empty" class="empty" hidden>No contacts yet. Share the app with friends — they show up here once they sign up.</p>
     <p id="version" class="version"></p>
+  </section>
+
+  <!-- Admin: every conversation (read-only) -->
+  <section id="admin" class="screen" hidden>
+    <header class="bar">
+      <button id="a-back" class="icon-btn" aria-label="Back">←</button>
+      <div class="c-title">
+        <div class="a-title">All chats (admin)</div>
+        <div id="a-count" class="c-status"></div>
+      </div>
+    </header>
+    <ul id="a-list" class="list"></ul>
+    <p id="a-empty" class="empty" hidden>No conversations yet.</p>
   </section>
 
   <!-- Conversation -->

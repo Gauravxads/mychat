@@ -21,6 +21,7 @@ body {
 button { font: inherit; cursor: pointer; }
 
 .screen { height: 100dvh; display: flex; flex-direction: column; }
+.composer[hidden] { display: none !important; }
 
 /* Top bar */
 .bar {
@@ -98,6 +99,9 @@ button { font: inherit; cursor: pointer; }
 .meta { float: right; font-size: 11px; color: var(--muted); margin: 6px 0 -2px 10px; white-space: nowrap; }
 .tick { margin-left: 3px; letter-spacing: -3px; font-size: 13px; }
 .tick.read { color: var(--blue); }
+.a-title { font-weight: 600; font-size: 17px; }
+.who { font-size: 12px; font-weight: 600; color: var(--green); margin-bottom: 2px; }
+.older { align-self: center; color: var(--muted); font-size: 12px; padding: 6px 0 2px; }
 .no-msgs { align-self: center; color: var(--muted); font-size: 13px; background: #fff8c5; padding: 6px 12px; border-radius: 8px; margin-top: 10px; }
 
 .composer {
