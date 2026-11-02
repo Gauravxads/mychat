@@ -1,0 +1,70 @@
+# Builds the Android APK on every change and publishes it as a GitHub Release.
+# Share link (always the newest build):
+#   https://github.com/<your-username>/<repo-name>/releases/latest/download/MyChat.apk
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v4
+
+      - name: Install and bundle the app
+        run: |
+          npm ci
+          BUILD_NUMBER=${{ github.run_number }} npm run build
+
+      - name: Create the Android project
+        run: |
+          npx cap add android
+          M=android/app/src/main/AndroidManifest.xml
+          # Keep the keyboard from covering the message box
+          sed -i 's/<activity/<activity android:windowSoftInputMode="adjustResize"/' $M
+          # In-app updater: permission to open the installer, plus the native plugin
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n</manifest>#' $M
+          cp native/*.java android/app/src/main/java/com/mychat/app/
+          # Version = build number, so Android treats each build as a newer version
+          sed -i 's/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName "1.0"/versionName "1.${{ github.run_number }}"/' android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle
+          grep -n "REQUEST_INSTALL_PACKAGES\|adjustResize" $M
+
+      - name: Use the repo's signing key (so new versions install over old ones)
+        run: |
+          for d in "$HOME/.android" "${ANDROID_USER_HOME:-$HOME/.android}"; do
+            mkdir -p "$d" && base64 -d debug.keystore.b64 > "$d/debug.keystore"
+          done
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../MyChat.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: MyChat build ${{ github.run_number }}
+          files: MyChat.apk
+          make_latest: true
