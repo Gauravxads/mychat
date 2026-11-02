@@ -48,6 +48,18 @@ function el(tag, cls, text) {
   if (text != null) e.textContent = text;
   return e;
 }
+function askConfirm(title, text, okLabel) {
+  return new Promise((res) => {
+    const box = $('confirm'), yes = $('confirm-yes'), no = $('confirm-no');
+    $('confirm-title').textContent = title;
+    $('confirm-text').textContent = text;
+    yes.textContent = okLabel;
+    const done = (v) => { box.hidden = true; yes.onclick = no.onclick = null; res(v); };
+    yes.onclick = () => done(true);
+    no.onclick = () => done(false);
+    box.hidden = false;
+  });
+}
 let toastTimer;
 function toast(msg) {
   $('toast').textContent = msg;
@@ -55,9 +67,8 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => ($('toast').hidden = true), 4000);
 }
-const COLORS = ['#e57373', '#f06292', '#ba68c8', '#7986cb', '#4fc3f7', '#4db6ac', '#81c784', '#ffb74d', '#a1887f', '#90a4ae'];
-function avatar(uid, cls = 'avatar') {
-  const name = nameOf(uid);
+const COLORS = ['#C2652A', '#7B4FB8', '#1F7A9C', '#B83B6B', '#3C7A3A', '#9C6B1F', '#4A5BB5', '#0E7C66'];
+function avatar(uid, cls = 'avatar', name = nameOf(uid)) {
   const a = el('div', cls, name === 'Unknown' ? '?' : name.trim()[0]?.toUpperCase() || '?');
   let h = 0;
   for (const c of uid) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -96,20 +107,26 @@ let signupMode = false;
 $('f-toggle').onclick = () => setSignupMode(!signupMode);
 function setSignupMode(on) {
   signupMode = on;
-  $('f-name').hidden = !signupMode;
-  $('f-name').required = signupMode;
+  $('name-field').hidden = !signupMode;
+  $('auth-sub').textContent = signupMode
+    ? "Create your account. You'll get your own 6-character ID to share with friends."
+    : 'Private chat for your circle. Log in to see your chats.';
   $('f-submit').textContent = signupMode ? 'Create account' : 'Log in';
   $('f-toggle').textContent = signupMode ? 'Already have an account? Log in' : 'New here? Create an account';
   $('f-error').textContent = '';
 }
 
 const AUTH_ERRORS = {
-  'auth/invalid-credential': 'Wrong email or password.',
-  'auth/invalid-email': 'That email looks wrong.',
-  'auth/email-already-in-use': 'This email already has an account. Log in instead.',
-  'auth/weak-password': 'Password must be at least 6 characters.',
-  'auth/network-request-failed': 'No internet connection.',
-  'auth/too-many-requests': 'Too many tries. Wait a minute and try again.',
+  'auth/invalid-credential': 'Wrong email or password. Check and try again.',
+  'auth/user-not-found': 'Wrong email or password. Check and try again.',
+  'auth/wrong-password': 'Wrong email or password. Check and try again.',
+  'auth/invalid-email': "That email doesn't look right. Check and try again.",
+  'auth/missing-email': 'Enter your email.',
+  'auth/missing-password': 'Enter your password.',
+  'auth/email-already-in-use': 'This email already has an account. Try logging in.',
+  'auth/weak-password': 'Password is too short — use at least 6 characters.',
+  'auth/network-request-failed': 'No internet. Check your connection and try again.',
+  'auth/too-many-requests': 'Too many tries. Please wait a minute and try again.',
   'auth/operation-not-allowed': 'Email login is not enabled in Firebase (Authentication → Sign-in method).',
   'auth/configuration-not-found': 'Authentication is not enabled in Firebase yet.',
 };
@@ -121,7 +138,9 @@ $('auth-form').onsubmit = async (e) => {
   const pass = $('f-pass').value;
   const name = $('f-name').value.trim();
   $('f-error').textContent = '';
+  if (signupMode && !name) { $('f-error').textContent = 'Enter your name.'; return; }
   $('f-submit').disabled = true;
+  $('f-submit').classList.add('loading');
   try {
     if (signupMode) {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -134,11 +153,12 @@ $('auth-form').onsubmit = async (e) => {
     $('f-error').textContent = AUTH_ERRORS[err.code] || err.message;
   } finally {
     $('f-submit').disabled = false;
+    $('f-submit').classList.remove('loading');
   }
 };
 
-$('logout').onclick = () => {
-  if (confirm('Log out?')) signOut(auth);
+$('logout').onclick = async () => {
+  if (await askConfirm('Log out of MyChat?', 'Your chats are saved. Log in again with the same email to see them.', 'Log out')) signOut(auth);
 };
 
 // ---------- App start / stop ----------
@@ -218,7 +238,8 @@ function stop() {
   $('add-modal').hidden = true;
   me = null; users = {}; chats = {}; contacts = new Set(); incoming = []; outgoing = [];
   ensuringCode = false;
-  $('list').innerHTML = '';
+  $('list').querySelectorAll('.row').forEach((r) => r.remove());
+  $('confirm').hidden = true;
   renderRequests();
   setSignupMode(false);
   $('f-pass').value = '';
@@ -287,6 +308,8 @@ function syncProfiles() {
 $('add-btn').onclick = () => {
   $('add-code').value = '';
   $('add-error').textContent = '';
+  $('add-error').classList.remove('info');
+  $('add-code').classList.remove('invalid');
   $('add-modal').hidden = false;
   $('add-code').focus();
 };
@@ -294,23 +317,31 @@ $('add-cancel').onclick = () => ($('add-modal').hidden = true);
 $('add-form').onsubmit = async (e) => {
   e.preventDefault();
   const code = $('add-code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const fail = (msg) => ($('add-error').textContent = msg);
-  if (code.length !== 6) return fail('An ID has 6 letters/numbers, like K7Q2MX.');
-  if (code === users[me]?.code) return fail("That's your own ID.");
-  $('add-send').disabled = true;
+  const fail = (msg, info = false) => {
+    $('add-error').textContent = msg;
+    $('add-error').classList.toggle('info', info);
+    $('add-code').classList.toggle('invalid', !!msg && !info);
+  };
+  if (code.length !== 6) return fail('An ID has 6 letters or numbers.');
+  if (code === users[me]?.code) return fail("That's your own ID. Ask your friend for theirs.");
+  const sendBtn = $('add-send');
+  sendBtn.disabled = true;
+  sendBtn.classList.add('loading');
+  sendBtn.textContent = 'Sending…';
   fail('');
   try {
     const c = await getDoc(doc(db, 'codes', code));
-    if (!c.exists()) return fail('No one has this ID. Check it and try again.');
+    if (!c.exists()) return fail('No one has this ID. Check the letters and try again.');
     const uid = c.data().uid;
-    if (contacts.has(uid)) return fail('Already in your contacts.');
+    if (contacts.has(uid)) return fail(`${nameOf(uid)} is already in your chats.`, true);
     const theirs = incoming.find((i) => i.from === uid);
     if (theirs) { // they already asked me: just approve
       await acceptInvite(theirs);
       $('add-modal').hidden = true;
       return;
     }
-    if (outgoing.some((i) => i.to === uid)) return fail('Request already sent. Waiting for them to approve.');
+    const sent = outgoing.find((i) => i.to === uid);
+    if (sent) return fail(`Request already sent. Waiting for ${sent.toName || 'them'} to approve.`, true);
     const them = await getDoc(doc(db, 'users', uid));
     await setDoc(doc(db, 'invites', `${me}_${uid}`), {
       from: me, to: uid,
@@ -321,9 +352,11 @@ $('add-form').onsubmit = async (e) => {
     $('add-modal').hidden = true;
     toast(`Request sent to ${them.data()?.name || code}. They'll appear here once they approve.`);
   } catch (err) {
-    fail(err.code === 'permission-denied' ? 'Could not send the request.' : err.message);
+    fail(err.code === 'permission-denied' ? 'Could not send the request. Try again.' : err.message);
   } finally {
-    $('add-send').disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.classList.remove('loading');
+    sendBtn.textContent = 'Send request';
   }
 };
 
@@ -344,11 +377,13 @@ async function acceptInvite(inv) {
   toast(`${inv.fromName || 'Contact'} added to your chats.`);
 }
 
-function requestRow(name, code, buttons) {
-  const row = el('li', 'req');
+function requestRow(uid, name, code, buttons) {
+  const row = el('div', 'req');
   const info = el('div', 'req-info');
-  info.append(el('div', 'name', name || 'Unknown'), el('div', 'preview', `ID ${code || '—'}`));
-  row.append(info, ...buttons);
+  info.append(el('div', 'name', name || 'Unknown'), el('span', null, `ID ${code || '—'}`));
+  const actions = el('div', 'req-actions');
+  actions.append(...buttons);
+  row.append(avatar(uid, 'avatar', name || '?'), info, actions);
   return row;
 }
 function smallBtn(label, cls, fn) {
@@ -363,19 +398,19 @@ function smallBtn(label, cls, fn) {
 
 function renderRequests() {
   const n = incoming.length;
-  $('bell-badge').hidden = n === 0;
-  $('bell-badge').textContent = n > 9 ? '9+' : String(n);
+  $('bell-badge').textContent = n === 0 ? '' : n > 9 ? '9+' : String(n); // CSS hides it when empty
+  $('bell').setAttribute('aria-label', n ? `Contact requests (${n} new)` : 'Contact requests');
   const inList = $('r-in'), outList = $('r-out');
   inList.innerHTML = '';
   outList.innerHTML = '';
   for (const inv of incoming) {
-    inList.append(requestRow(inv.fromName, inv.fromCode, [
+    inList.append(requestRow(inv.from, inv.fromName, inv.fromCode, [
       smallBtn('Reject', 'ghost', () => deleteDoc(doc(db, 'invites', inv.id))),
       smallBtn('Approve', 'solid', () => acceptInvite(inv)),
     ]));
   }
   for (const inv of outgoing) {
-    outList.append(requestRow(inv.toName, inv.toCode, [
+    outList.append(requestRow(inv.to, inv.toName, inv.toCode, [
       el('span', 'pending', 'Pending'),
       smallBtn('Cancel', 'ghost', () => deleteDoc(doc(db, 'invites', inv.id))),
     ]));
@@ -388,7 +423,8 @@ function renderRequests() {
 $('c-remove').onclick = async () => {
   if (!open || open.admin) return;
   const other = open.other;
-  if (!confirm(`Remove ${nameOf(other)} from your contacts? You will both need to send a new request to chat again.`)) return;
+  const name = nameOf(other);
+  if (!(await askConfirm(`Remove ${name}?`, "You'll disappear from each other's chat lists. To chat again, one of you will need to send a new request.", 'Remove'))) return;
   const b = writeBatch(db);
   b.delete(doc(db, 'users', me, 'contacts', other));
   b.delete(doc(db, 'users', other, 'contacts', me));
@@ -408,11 +444,11 @@ function renderList() {
       || nameOf(a.uid).localeCompare(nameOf(b.uid)));
 
   const list = $('list');
-  list.innerHTML = '';
+  list.querySelectorAll('.row').forEach((r) => r.remove()); // keep #empty and #version
   $('empty').hidden = others.length > 0 || q !== '';
   for (const { uid, chat } of others) {
     const unread = chat?.unread?.[me] || 0;
-    const row = el('li', 'row');
+    const row = el('div', 'row');
     row.append(avatar(uid));
     const mid = el('div', 'mid');
     const top = el('div', 'top');
@@ -426,7 +462,7 @@ function renderList() {
     mid.append(top, bottom);
     row.append(mid);
     row.onclick = () => openChat(uid);
-    list.append(row);
+    list.insertBefore(row, $('empty'));
   }
 }
 
@@ -480,7 +516,7 @@ function renderAdminList() {
   for (const id of ids) {
     const c = adminChats[id];
     const [a, b] = c.members || id.split('_');
-    const row = el('li', 'row');
+    const row = el('div', 'row');
     row.append(avatar(a));
     const mid = el('div', 'mid');
     const top = el('div', 'top');
@@ -501,6 +537,7 @@ function openChat(other, { adminChatId = null, viewer = me } = {}) {
   // byId keeps every message seen so far, so ones that scroll out of the live window are not lost.
   open = { id, other, viewer, admin: !!adminChatId, byId: new Map(), msgs: [], unsub: null, hasMore: true, loadingOlder: false };
   $('composer').hidden = open.admin;
+  $('chat').classList.toggle('admin-view', open.admin); // CSS: indigo header, read-only bar
   show('chat');
   history.pushState({ chat: id }, '');
   renderHeader();
@@ -553,7 +590,9 @@ function closeChat() {
   open.unsub?.();
   open = null;
   $('text').value = '';
+  $('text').style.height = '';
   $('composer').hidden = false;
+  $('chat').classList.remove('admin-view');
   if (me) show(wasAdmin ? 'admin' : 'home');
 }
 
@@ -571,7 +610,8 @@ function renderHeader() {
   $('c-remove').hidden = open.admin;
   $('c-name').textContent = open.admin ? `${nameOf(viewer)} ↔ ${nameOf(other)}` : nameOf(other);
   $('c-status').textContent = open.admin ? 'Admin view · read-only' : statusText(other);
-  $('c-avatar').replaceWith(Object.assign(avatar(other, 'avatar sm'), { id: 'c-avatar' }));
+  $('c-status').classList.toggle('online', !open.admin && isOnline(other));
+  $('c-avatar').replaceWith(Object.assign(avatar(other, 'avatar'), { id: 'c-avatar' }));
 }
 
 function renderMessages({ keepPosition = false } = {}) {
@@ -649,7 +689,7 @@ function send(message, previewText) {
 const textBox = $('text');
 textBox.oninput = () => {
   textBox.style.height = 'auto';
-  textBox.style.height = textBox.scrollHeight + 'px';
+  textBox.style.height = Math.min(textBox.scrollHeight, 120) + 'px';
 };
 $('composer').onsubmit = (e) => {
   e.preventDefault();
@@ -657,7 +697,7 @@ $('composer').onsubmit = (e) => {
   if (!text) return;
   send({ text }, text);
   textBox.value = '';
-  textBox.oninput();
+  textBox.style.height = '';
   textBox.focus();
 };
 
@@ -713,29 +753,35 @@ async function checkForUpdate() {
   }
 }
 
+// One helper per step: title, text (fixed strings only), and which buttons show.
+function updateStep(title, html, { progress = false, yes = null, later = true } = {}) {
+  $('u-title').textContent = title;
+  $('u-text').innerHTML = html;
+  $('u-progress').hidden = !progress;
+  $('u-later').hidden = !later;
+  $('u-yes').hidden = !yes;
+  if (yes) { $('u-yes').textContent = yes.label; $('u-yes').onclick = yes.fn; }
+  $('update').hidden = false;
+}
+$('u-later').onclick = () => ($('update').hidden = true);
+
 function showUpdate(latest, url, size) {
   const mb = size ? ` (${(size / 1048576).toFixed(1)} MB)` : '';
-  $('u-text').textContent = `A new version is ready${mb}. Update now? Your chats are kept.`;
-  $('u-bar').hidden = true;
-  $('u-pct').textContent = '';
-  $('u-later').hidden = false;
-  $('u-yes').hidden = false;
-  $('u-yes').textContent = 'Update';
-  $('u-yes').onclick = () => downloadUpdate(url);
-  $('u-later').onclick = () => ($('update').hidden = true);
-  $('update').hidden = false;
+  updateStep('Update available',
+    `A new version of MyChat is ready${mb}. Your chats stay safe — nothing is deleted.`,
+    { yes: { label: 'Update', fn: () => downloadUpdate(url) } });
 }
 
 async function downloadUpdate(url) {
-  $('u-yes').hidden = true;
-  $('u-later').hidden = true;
-  $('u-bar').hidden = false;
   $('u-fill').style.width = '0%';
-  $('u-text').textContent = 'Downloading update…';
+  $('u-pct').textContent = '0%';
+  updateStep('Downloading update…', 'Keep MyChat open. This takes under a minute on mobile data.',
+    { progress: true, later: false });
   const listener = await Updater.addListener('progress', ({ loaded, total }) => {
     const pct = total > 0 ? Math.floor((loaded / total) * 100) : null;
     $('u-fill').style.width = (pct ?? 50) + '%';
     $('u-pct').textContent = pct != null ? `${pct}%` : `${(loaded / 1048576).toFixed(1)} MB`;
+    if (pct != null) $('u-bar').setAttribute('aria-valuenow', String(pct));
   });
   try {
     await Updater.download({ url });
@@ -743,13 +789,9 @@ async function downloadUpdate(url) {
     $('u-pct').textContent = '100%';
     await installUpdate();
   } catch (err) {
-    $('u-text').textContent = `Download failed: ${err.message || err}. Check your internet and try again.`;
-    $('u-bar').hidden = true;
-    $('u-pct').textContent = '';
-    $('u-yes').textContent = 'Retry';
-    $('u-yes').onclick = () => downloadUpdate(url);
-    $('u-yes').hidden = false;
-    $('u-later').hidden = false;
+    console.warn('Update download failed', err);
+    updateStep("Download didn't finish", 'Check your internet connection and try again. Your chats are not affected.',
+      { yes: { label: 'Retry', fn: () => downloadUpdate(url) } });
   } finally {
     listener.remove();
   }
@@ -757,13 +799,16 @@ async function downloadUpdate(url) {
 
 async function installUpdate() {
   const { needsPermission } = await Updater.install();
-  $('u-text').textContent = needsPermission
-    ? 'Allow "Install unknown apps" for MyChat in the screen that opened, then come back and tap Install.'
-    : 'Tap "Update" in the Android prompt to finish. If nothing opened, tap Install.';
-  $('u-yes').textContent = 'Install';
-  $('u-yes').onclick = () => installUpdate();
-  $('u-yes').hidden = false;
-  $('u-later').hidden = false;
+  const again = { label: 'Install', fn: () => installUpdate() };
+  if (needsPermission) {
+    updateStep('One quick setting',
+      'Android needs your OK to install updates from MyChat. Turn on <b>Allow from this source</b>, then come back and tap Install.',
+      { yes: again });
+  } else {
+    updateStep('Almost done',
+      "Tap <b>Update</b> in the Android prompt to finish. Didn't see it? Tap Install to try again.",
+      { yes: again });
+  }
 }
 
 // ---------- Boot ----------
@@ -771,7 +816,7 @@ $('version').textContent = BUILD ? `Version ${BUILD}` : '';
 checkForUpdate();
 if (firebaseConfig.apiKey.startsWith('PASTE')) {
   show('auth');
-  $('setup-msg').hidden = false;
+  $('setup-msg').textContent = 'Firebase is not set up yet. Paste your config into src/firebase-config.js and rebuild.';
   $('f-submit').disabled = true;
 } else {
   const app = initializeApp(firebaseConfig);
