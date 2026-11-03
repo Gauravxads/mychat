@@ -29,13 +29,18 @@ You do not need Android Studio or Play Store.
 
 ## Step 3 — Share the link
 
-Your permanent download link (replace `USERNAME` with your GitHub username):
+One link for Android **and** iPhone (published by `.github/workflows/pages.yml`; one-time setup: **Settings → Pages → Source: GitHub Actions**):
 
 ```
-https://github.com/Gauravxads/mychat/releases/latest/download/MyChat.apk
+https://gauravxads.github.io/mychat/
 ```
 
-To install on a phone, open the link → the APK downloads → tap it. If Android asks, allow **"Install unknown apps"** for Chrome. If Play Protect warns about an unknown app, tap **More details → Install anyway**. Then open the app → **Create an account**.
+- **Android:** the APK starts downloading by itself.
+- **iPhone:** iPhones can't install APKs, so it opens MyChat in Safari. Tap **Share → Add to Home Screen** and it opens from its own icon like an app. iPhone and Android users chat with each other normally.
+
+Direct APK link (Android only): `https://github.com/Gauravxads/mychat/releases/latest/download/MyChat.apk`
+
+To install on Android, open the link → the APK downloads → tap it. If Android asks, allow **"Install unknown apps"** for Chrome. If Play Protect warns about an unknown app, tap **More details → Install anyway**. Then open the app → **Create an account**.
 
 Everyone who signs up appears in everyone else's contact list.
 
