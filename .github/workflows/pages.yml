@@ -42,6 +42,9 @@ jobs:
           mkdir _site
           cp download.html _site/index.html
           cp -r www _site/app
+          # New file names each publish, so an update never mixes a new page with an old cached script
+          sed -i "s#src=\"app.js\"#src=\"app.js?v=${{ github.run_number }}\"#; s#href=\"style.css\"#href=\"style.css?v=${{ github.run_number }}\"#" _site/app/index.html
+          grep -n "app.js?v=\|style.css?v=" _site/app/index.html
           ls -R _site
 
       - uses: actions/configure-pages@v5
