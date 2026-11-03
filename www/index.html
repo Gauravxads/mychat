@@ -6,6 +6,14 @@
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111B21" media="(prefers-color-scheme: dark)">
 <title>MyChat</title>
+<!-- Web app (iPhone: Safari → Share → Add to Home Screen) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MyChat">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -361,6 +369,28 @@
 
 <!-- TOAST -->
 <div id="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- IPHONE INSTALL HINT: only in Safari, not once added to the Home Screen -->
+<div id="ios-install" hidden>
+  <span>Install MyChat: tap <b>Share</b>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg>
+    below, then <b>Add to Home Screen</b>.</span>
+  <button type="button" class="icon-btn" aria-label="Close">✕</button>
+</div>
+<script>
+  (function () {
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var installed = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+    var closed; try { closed = localStorage.getItem('iosInstallClosed'); } catch (e) {}
+    if (!ios || installed || closed) return;
+    var hint = document.getElementById('ios-install');
+    hint.hidden = false;
+    hint.querySelector('button').onclick = function () {
+      hint.hidden = true;
+      try { localStorage.setItem('iosInstallClosed', '1'); } catch (e) {}
+    };
+  })();
+</script>
 
 <!-- Keep your existing script tag(s) here, unchanged -->
 <script type="module" src="app.js"></script>

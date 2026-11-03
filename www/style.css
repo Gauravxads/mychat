@@ -602,6 +602,22 @@ svg { flex-shrink: 0; }
 #chat ~ #toast, body:has(#chat:not([hidden])) #toast { bottom: calc(80px + var(--safe-bottom)); }
 @media (prefers-color-scheme: dark) { #toast { color: #111B21; } } /* after the base rule so it wins */
 
+/* ---------- iPhone install hint ---------- */
+#ios-install {
+  position: fixed; left: 12px; right: 12px; z-index: 60;
+  bottom: calc(12px + var(--safe-bottom));
+  margin: 0 auto; max-width: 420px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--primary); color: #FFF;
+  font-size: 14px; line-height: 1.4;
+  padding: 8px 4px 8px 16px; border-radius: 14px;
+  box-shadow: var(--shadow-pop);
+}
+#ios-install[hidden] { display: none; }
+#ios-install span { flex: 1; }
+#ios-install svg { vertical-align: -3px; }
+#ios-install .icon-btn { color: #FFF; flex-shrink: 0; }
+
 /* ---------- Motion ---------- */
 @keyframes fade { from { opacity: 0; } }
 @keyframes slide-up { from { transform: translateY(24px); opacity: .6; } }
