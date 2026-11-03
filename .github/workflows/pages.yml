@@ -1,0 +1,54 @@
+# Publishes the share link on GitHub Pages (one link for Android and iPhone):
+#   https://gauravxads.github.io/mychat/      → download.html (Android: APK, iPhone: install steps)
+#   https://gauravxads.github.io/mychat/app/  → the app itself, for iPhone (Add to Home Screen)
+# One-time setup: Settings → Pages → Source: "GitHub Actions".
+name: Publish website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install and bundle the app
+        run: |
+          npm ci
+          npm run build
+
+      - name: Put the site together
+        run: |
+          mkdir _site
+          cp download.html _site/index.html
+          cp -r www _site/app
+          ls -R _site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
