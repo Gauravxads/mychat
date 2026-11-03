@@ -16,7 +16,8 @@ import { firebaseConfig } from './firebase-config.js';
 // Each GitHub build has a number (baked in at build time). On launch the app asks GitHub
 // for the latest release; if it is newer, it offers to download and install it.
 const REPO = 'Gauravxads/mychat';
-const APK_URL = `https://github.com/${REPO}/releases/latest/download/MyChat.apk`;
+// One link for everyone: Android downloads the APK, iPhone opens the web app (download.html).
+const SHARE_URL = 'https://gauravxads.github.io/mychat/';
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 0;
 const NATIVE = Capacitor.isNativePlatform();
 const Updater = registerPlugin('Updater');
@@ -328,7 +329,7 @@ async function ensureCode() {
   }
 }
 
-const inviteText = (code) => `Add me on MyChat! My ID is ${code}\n\nGet the app: ${APK_URL}`;
+const inviteText = (code) => `Add me on MyChat! My ID is ${code}\n\nGet the app: ${SHARE_URL}`;
 $('empty-share').onclick = () => {
   const code = users[me]?.code;
   if (code) shareText(inviteText(code), 'Share your MyChat ID');
