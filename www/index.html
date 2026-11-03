@@ -392,6 +392,40 @@
   })();
 </script>
 
+<!-- AUTO-UPDATE (web app only; the Android app has its own updater) -->
+<button type="button" id="web-update" class="upd" hidden>New version ready · Tap to update</button>
+<script>
+  (function () {
+    var native = function () { return !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()); };
+    if (native()) return;
+    var ver = null, btn = document.getElementById('web-update');
+    // GitHub Pages changes the page's ETag on every publish
+    function stamp() {
+      return fetch(location.pathname, { method: 'HEAD', cache: 'no-store' })
+        .then(function (r) { return r.ok ? (r.headers.get('etag') || r.headers.get('last-modified')) : null; })
+        .catch(function () { return null; });
+    }
+    function reloadNow() { location.reload(); }
+    function busy() { // don't throw away a half-typed message
+      var a = document.activeElement, t = document.getElementById('text');
+      return (a && /^(INPUT|TEXTAREA)$/.test(a.tagName)) || (t && t.value.trim());
+    }
+    function check() {
+      if (!ver || native()) return;
+      stamp().then(function (t) {
+        if (!t || t === ver) return;
+        if (busy()) { btn.hidden = false; return; }
+        reloadNow();
+      });
+    }
+    stamp().then(function (t) { ver = t || 'offline'; });
+    btn.onclick = reloadNow;
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+    addEventListener('online', check);
+    setInterval(check, 5 * 60e3);
+  })();
+</script>
+
 <!-- Keep your existing script tag(s) here, unchanged -->
 <script type="module" src="app.js"></script>
 </body>

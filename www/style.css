@@ -618,6 +618,16 @@ svg { flex-shrink: 0; }
 #ios-install svg { vertical-align: -3px; }
 #ios-install .icon-btn { color: #FFF; flex-shrink: 0; }
 
+/* ---------- Update pill (web app) ---------- */
+.upd {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 70;
+  top: calc(10px + var(--safe-top));
+  border: 0; border-radius: var(--r-pill); padding: 9px 16px;
+  background: var(--primary); color: #FFF; font-weight: 600; font-size: 14px; white-space: nowrap;
+  box-shadow: var(--shadow-pop);
+}
+.upd[hidden] { display: none; }
+
 /* ---------- Motion ---------- */
 @keyframes fade { from { opacity: 0; } }
 @keyframes slide-up { from { transform: translateY(24px); opacity: .6; } }
